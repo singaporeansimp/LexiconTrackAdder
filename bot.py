@@ -111,24 +111,40 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /start command."""
     config = context.bot_data.get('config')
     
+    # Check if user is admin
+    if not is_admin(update.effective_user.id, config):
+        if update.message:
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+        return
+    
     if not config.is_configured():
-        await update.message.reply_text(
-            "Welcome to Lexicon Track Adder Bot!\n\n"
-            "The bot is not configured yet. Please run the setup script first:\n\n"
-            "`python bot.py --setup --download-dir /path/to/music --lexicon-enabled yes/no`\n\n"
-            "Replace `/path/to/music` with your desired download directory.\n"
-            "After setup is complete, restart the bot and send /start again."
-        )
+        if update.message:
+            await update.message.reply_text(
+                "Welcome to Lexicon Track Adder Bot!\n\n"
+                "The bot is not configured yet. Please run the setup script first:\n\n"
+                "`python bot.py --setup --download-dir /path/to/music --lexicon-enabled yes/no`\n\n"
+                "Replace `/path/to/music` with your desired download directory.\n"
+                "After setup is complete, restart the bot and send /start again."
+            )
         return
     else:
-        await update.message.reply_text(
-            "Welcome back! Send me an MP3 file and I'll download it for you."
-        )
+        if update.message:
+            await update.message.reply_text(
+                "Welcome back! Send me an MP3 file and I'll download it for you."
+            )
 
 
 @handle_bot_error
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /help command."""
+    config = context.bot_data.get('config')
+    
+    # Check if user is admin
+    if not is_admin(update.effective_user.id, config):
+        if update.message:
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+        return
+    
     help_text = """
     *Lexicon Track Adder Bot Help*
     
@@ -145,7 +161,113 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     If the bot is not configured, run:
     `python bot.py --setup --download-dir /path/to/music --lexicon-enabled yes/no`
     """
-    await update.message.reply_text(help_text, parse_mode="Markdown")
+    if update.message:
+        await update.message.reply_text(help_text, parse_mode="Markdown")
+
+
+@handle_bot_error
+async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle document and audio messages (MP3 files)."""
+    config = context.bot_data.get('config')
+    
+    # Check if user is admin
+    if not is_admin(update.effective_user.id, config):
+        if update.message:
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+        return
+    
+    # Get the document or audio file
+    document = None
+    file_name = None
+    
+    if update.message.document:
+        document = update.message.document
+        file_name = document.file_name
+    elif update.message.audio:
+        document = update.message.audio
+        file_name = document.file_name or f"{document.title or 'audio'}.mp3"
+    else:
+        if update.message:
+            await update.message.reply_text("❌ No document or audio file found.")
+        return
+    
+    # Check if it's an MP3 file
+    if not is_mp3_file(file_name):
+        if update.message:
+            await update.message.reply_text("❌ Only MP3 files are supported.")
+        return
+    
+    try:
+        # Initialize download manager
+        download_manager = DownloadManager(config.download_dir)
+        
+        # Download the file
+        file_path = await download_manager.download_file(document, context, update)
+        
+        if not file_path:
+            if update.message:
+                await update.message.reply_text("❌ Failed to download the file.")
+            return
+        
+        # If Lexicon integration is enabled, add the track
+        if config.lexicon_enabled:
+            try:
+                if update.message:
+                    await update.message.reply_text("🔄 Adding track to Lexicon...")
+                
+                # Initialize Lexicon client
+                lexicon_client = LexiconClient(config.lexicon_api_url)
+                
+                # Add the track
+                track_data = lexicon_client.add_track(file_path)
+                
+                if track_data:
+                    if update.message:
+                        # Check if we have a success flag but no actual track data
+                        if track_data.get("success") and track_data.get("title") == "Unknown" and track_data.get("artist") == "Unknown":
+                            await update.message.reply_text(
+                                "✅ Track added to Lexicon successfully!\n"
+                                "Track details were not available in the response."
+                            )
+                        else:
+                            await update.message.reply_text(
+                                f"✅ Track added to Lexicon successfully!\n"
+                                f"Title: {track_data.get('title', 'Unknown')}\n"
+                                f"Artist: {track_data.get('artist', 'Unknown')}"
+                            )
+                else:
+                    if update.message:
+                        await update.message.reply_text("⚠️ File downloaded but couldn't add to Lexicon.")
+                    
+            except LexiconError as e:
+                if update.message:
+                    await update.message.reply_text(f"⚠️ Error adding to Lexicon: {str(e)}")
+                logger.error(f"Lexicon error: {e}")
+        
+    except DownloadError as e:
+        if update.message:
+            await update.message.reply_text(f"❌ Download error: {str(e)}")
+        logger.error(f"Download error: {e}")
+    except Exception as e:
+        if update.message:
+            await update.message.reply_text(f"❌ An unexpected error occurred: {str(e)}")
+        logger.error(f"Unexpected error: {e}")
+
+
+@handle_bot_error
+async def handle_unauthorized(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle messages from unauthorized users."""
+    config = context.bot_data.get('config')
+    
+    # Check if user is admin
+    if not is_admin(update.effective_user.id, config):
+        if update.message:
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+        return
+    
+    # If admin but message wasn't handled by other handlers
+    if update.message:
+        await update.message.reply_text("❌ I don't understand this message. Please send an MP3 file or use /help for commands.")
 
 
 def main() -> None:
@@ -190,7 +312,12 @@ def main() -> None:
     # Add handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(MessageHandler(filters.Document.ALL, handle_document))
+    
+    # Add handler for documents and audio files
+    application.add_handler(MessageHandler(filters.Document.ALL | filters.AUDIO, handle_document))
+    
+    # Add catch-all handler for unauthorized users (higher group number = lower priority)
+    application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_unauthorized), group=2)
     
     # Add error handler
     application.add_error_handler(error_handler)

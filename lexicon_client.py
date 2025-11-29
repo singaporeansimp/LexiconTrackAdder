@@ -42,14 +42,43 @@ class LexiconClient:
         """
         try:
             data = {"locations": [file_path]}
+            logger.info(f"Adding track to Lexicon: {file_path}")
+            
             response = self.session.post(
-                f"{self.base_url}/track",
+                f"{self.base_url}/tracks",
                 json=data,
                 timeout=30
             )
             
+            logger.info(f"Lexicon API response status: {response.status_code}")
+            
             if response.status_code == 200:
-                return response.json().get("data", {}).get("track")
+                response_data = response.json()
+                logger.info(f"Lexicon API response data: {response_data}")
+                
+                # Extract track data from the actual response structure
+                track_data = None
+                
+                # Check for tracks array in data (actual structure from Lexicon)
+                if "data" in response_data and "tracks" in response_data["data"] and response_data["data"]["tracks"]:
+                    track_data = response_data["data"]["tracks"][0]
+                # Check for track in data.track (fallback)
+                elif "data" in response_data and "track" in response_data["data"]:
+                    track_data = response_data["data"]["track"]
+                # Check for tracks array directly (fallback)
+                elif "tracks" in response_data and response_data["tracks"]:
+                    track_data = response_data["tracks"][0]
+                # Check for track directly (fallback)
+                elif "track" in response_data:
+                    track_data = response_data["track"]
+                
+                if track_data:
+                    logger.info(f"Successfully extracted track data: {track_data}")
+                    return track_data
+                else:
+                    logger.warning("Track was added but couldn't extract track data from response")
+                    # Return a minimal track object to indicate success
+                    return {"title": "Unknown", "artist": "Unknown", "success": True}
             else:
                 error_msg = f"Error adding track: {response.status_code} - {response.text}"
                 logger.error(error_msg)

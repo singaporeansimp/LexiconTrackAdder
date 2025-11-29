@@ -25,7 +25,7 @@ class DownloadManager:
     @handle_bot_error
     async def download_file(
         self, 
-        document: Document, 
+        document, 
         context: ContextTypes.DEFAULT_TYPE,
         update: Update,
         progress_callback: Optional[Callable] = None
@@ -34,7 +34,7 @@ class DownloadManager:
         Download a file from Telegram.
         
         Args:
-            document: The Telegram document object
+            document: The Telegram document or audio object
             context: The Telegram context
             update: The Telegram update
             progress_callback: Optional callback for progress updates
@@ -42,9 +42,9 @@ class DownloadManager:
         Returns:
             Path to the downloaded file, or None if failed
         """
-        file_name = document.file_name
+        file_name = getattr(document, 'file_name', None) or f"{getattr(document, 'title', 'audio')}.mp3"
         file_id = document.file_id
-        file_size = document.file_size
+        file_size = getattr(document, 'file_size', 0)
         
         # Validate inputs
         if not file_name or not file_id:

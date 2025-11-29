@@ -13,17 +13,13 @@ def is_admin(user_id: int, config) -> bool:
     return user_id == config.admin_user_id
 
 
-def is_mp3_file(document: Document) -> bool:
-    """Check if document is an MP3 file."""
-    if not document:
+def is_mp3_file(file_name: str) -> bool:
+    """Check if file is an MP3 file."""
+    if not file_name:
         return False
     
     # Check file name extension
-    if document.file_name and document.file_name.lower().endswith('.mp3'):
-        return True
-    
-    # Check mime type
-    if document.mime_type and document.mime_type == 'audio/mpeg':
+    if file_name.lower().endswith('.mp3'):
         return True
     
     return False

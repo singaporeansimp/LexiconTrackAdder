@@ -71,7 +71,7 @@ def handle_bot_error(func):
         except ConfigurationError as e:
             # Handle configuration errors
             update = args[0] if args else None
-            if update and hasattr(update, 'message'):
+            if update and hasattr(update, 'message') and update.message:
                 await update.message.reply_text(
                     f"⚙️ Configuration error: {str(e)}\n"
                     "Please run /setup to reconfigure the bot."
@@ -80,7 +80,7 @@ def handle_bot_error(func):
         except DownloadError as e:
             # Handle download errors
             update = args[0] if args else None
-            if update and hasattr(update, 'message'):
+            if update and hasattr(update, 'message') and update.message:
                 await update.message.reply_text(
                     f"📥 Download error: {str(e)}\n"
                     "Please check your internet connection and try again."
@@ -89,7 +89,7 @@ def handle_bot_error(func):
         except LexiconError as e:
             # Handle Lexicon API errors
             update = args[0] if args else None
-            if update and hasattr(update, 'message'):
+            if update and hasattr(update, 'message') and update.message:
                 await update.message.reply_text(
                     f"🎵 Lexicon error: {str(e)}\n"
                     "The file was downloaded but not added to your library."
@@ -98,7 +98,7 @@ def handle_bot_error(func):
         except PermissionError as e:
             # Handle permission errors
             update = args[0] if args else None
-            if update and hasattr(update, 'message'):
+            if update and hasattr(update, 'message') and update.message:
                 await update.message.reply_text(
                     f"🔒 Permission error: {str(e)}\n"
                     "This bot is private and only accessible to the administrator."
@@ -110,7 +110,7 @@ def handle_bot_error(func):
             logger.error(traceback.format_exc())
             
             update = args[0] if args else None
-            if update and hasattr(update, 'message'):
+            if update and hasattr(update, 'message') and update.message:
                 await update.message.reply_text(
                     "❌ An unexpected error occurred.\n"
                     "Please try again or contact the administrator."
