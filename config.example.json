@@ -1,0 +1,7 @@
+{
+  "bot_token": "YOUR_TELEGRAM_BOT_TOKEN_HERE",
+  "admin_user_id": 123456789,
+  "download_dir": "/path/to/your/music/downloads",
+  "lexicon_enabled": true,
+  "lexicon_api_url": "http://localhost:48624/v1"
+}
