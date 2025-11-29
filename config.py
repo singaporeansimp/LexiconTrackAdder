@@ -22,7 +22,6 @@ class Config:
         """Check if the bot is properly configured."""
         return (
             bool(self.bot_token) and
-            self.admin_user_id is not None and
             bool(self.download_dir)
         )
     

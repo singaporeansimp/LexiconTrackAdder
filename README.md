@@ -7,7 +7,7 @@ A private Telegram bot that works with @deezload2bot to download music files and
 - Receives MP3 files from @deezload2bot
 - Downloads files to a user-specified folder
 - Optionally adds downloaded files to your Lexicon library
-- Simple setup process via Telegram conversation
+- Simple terminal-based setup process
 - Persistent configuration between runs
 - Comprehensive error handling and logging
 
@@ -39,7 +39,14 @@ A private Telegram bot that works with @deezload2bot to download music files and
    - Follow the instructions to create your bot
    - Copy the bot token
 
-4. Run the bot:
+4. Run the setup:
+   ```
+   python bot.py --setup --download-dir /path/to/your/music --lexicon-enabled yes
+   ```
+   Replace `/path/to/your/music` with your desired download directory.
+   Use `--lexicon-enabled no` if you don't want Lexicon integration.
+
+5. Start the bot:
    ```
    python bot.py
    ```
@@ -49,11 +56,9 @@ A private Telegram bot that works with @deezload2bot to download music files and
    python bot.py
    ```
 
-5. Send any message to your bot to start the setup process
-
 ## Configuration
 
-During the first run, the bot will guide you through:
+During setup, you will be prompted for:
 - Setting your download directory
 - Enabling/disabling Lexicon integration
 - Verifying Lexicon API connectivity (if enabled)
@@ -72,6 +77,13 @@ You can also manually create a `config.json` file based on `config.example.json`
 }
 ```
 
+### Reconfiguration
+
+To reconfigure the bot, simply run the setup command again:
+```
+python bot.py --setup --download-dir /new/path/to/music --lexicon-enabled yes
+```
+
 ## Usage
 
 1. Get an MP3 file from @deezload2bot
@@ -81,8 +93,7 @@ You can also manually create a `config.json` file based on `config.example.json`
 
 ## Commands
 
-- `/start` - Start the bot or begin setup
-- `/setup` - Reconfigure the bot settings
+- `/start` - Start the bot
 - `/help` - Show help message
 
 ## Lexicon Integration
@@ -132,7 +143,6 @@ lexicon-track-adder/
 ├── bot.py              # Main bot implementation
 ├── config.py           # Configuration management
 ├── lexicon_client.py   # Lexicon API client
-├── setup.py            # Setup conversation flow
 ├── utils.py            # Utility functions
 ├── download_manager.py  # File download management
 ├── error_handler.py    # Error handling

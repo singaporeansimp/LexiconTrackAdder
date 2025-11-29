@@ -36,7 +36,6 @@ class TestConfig(unittest.TestCase):
         self.assertFalse(config.is_configured())
         
         config.bot_token = "test_token"
-        config.admin_user_id = 12345
         config.download_dir = "/test/dir"
         self.assertTrue(config.is_configured())
     
@@ -52,7 +51,7 @@ class TestConfig(unittest.TestCase):
         data = {"bot_token": "test", "admin_user_id": 123}
         config = Config.from_dict(data)
         self.assertEqual(config.bot_token, "test")
-        self.assertEqual(config.admin_user_id", 123)
+        self.assertEqual(config.admin_user_id, 123)
 
 
 class TestUtils(unittest.TestCase):
